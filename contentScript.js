@@ -126,28 +126,8 @@
         }
       }
       
-      elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
+      elementPicker.enabled = continuePicking;
     })
-  }
-
-  function getVisibleRect(rect) {
-    let visibleRect = DOMRect.fromRect(rect);
-
-    if (visibleRect.x < 0) {
-      visibleRect.width += visibleRect.x;
-      visibleRect.x = 0;
-    }
-    if (visibleRect.y < 0) {
-      visibleRect.height += visibleRect.y;
-      visibleRect.y = 0;
-    }
-    if (visibleRect.x + visibleRect.width > window.innerWidth) {
-      visibleRect.width = window.innerWidth - visibleRect.x;
-    }
-    if (visibleRect.y + visibleRect.height > window.innerHeight) {
-      visibleRect.height = window.innerHeight - visibleRect.y;
-    }
-    return visibleRect;
   }
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
