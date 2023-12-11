@@ -111,8 +111,8 @@
           debug.log("[PIPElement:CTX] ADD to existing pipWindow");
           addToPipWindow(pipWindow, newPipElement);
         } else {
-          const width = elementPicker.hoverInfo.width + 22;
-          const height = elementPicker.hoverInfo.height + 22;
+          const width = 0; // elementPicker.hoverInfo.width + 22;
+          const height = 0; // elementPicker.hoverInfo.height + 22;
           documentPictureInPicture.requestWindow({width: width, height: height}).then((win) => {
             // close old pipWindow if exists
             if (pipWindow) {
