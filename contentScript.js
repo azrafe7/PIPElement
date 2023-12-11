@@ -27,7 +27,6 @@
   let lastTriggeredElement = null;
 
   let pipWindow = null;
-  let pipElements = [];
 
   /* if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
@@ -50,8 +49,8 @@
     hoverBoxInfoId: 'pip_picker_info',
   }
 
-  function copyStyleSheetsToPipWindow() {
-    if (!pipWindow) return;
+  function copyStyleSheetsToPipWindow(win) {
+    if (!win) return;
     
     // copy style sheets over from the initial document
     // so that the elements look the same
@@ -61,7 +60,7 @@
         const style = document.createElement('style');
 
         style.textContent = cssRules;
-        pipWindow.document.head.appendChild(style);
+        win.document.head.appendChild(style);
       } catch (e) {
         const link = document.createElement('link');
 
@@ -69,7 +68,7 @@
         link.type = styleSheet.type;
         link.media = styleSheet.media;
         link.href = styleSheet.href;
-        pipWindow.document.head.appendChild(link);
+        win.document.head.appendChild(link);
       }
     });
   }
@@ -91,31 +90,40 @@
         lastTriggeredElement = elementPicker.hoverInfo.element;
         
         const newPipElement = {element: lastTriggeredElement, container: lastTriggeredElement.parentElement, nextSibling: lastTriggeredElement.nextSibling};
-        pipElements = [newPipElement];
         
-        // request pip window        
-        documentPictureInPicture.requestWindow().then((win) => {
-          // close old pipWindow if exists
-          if (pipWindow) {
-            console.log("closing prev pipWindow");
-            pipWindow.close();
-          }
-
-          debug.log("[PIPElement:CTX] prev pip window:", pipWindow);
-          pipWindow = win;
-          debug.log("[PIPElement:CTX] new pip window:", win);
-          
-          pipWindow.document.body.append(newPipElement.element);
-          copyStyleSheetsToPipWindow();
+        // add element to pip window, restore element on "pagehide" event
+        function addToPipWindow(win, newPipElement) {
+          win.document.body.append(newPipElement.element);
+          copyStyleSheetsToPipWindow(win);
           
           // move the pip-ed element back when the Picture-in-Picture window closes
-          pipWindow.addEventListener("pagehide", (event) => {
-            debug.log("[PIPElement:CTX] pagehide event:", event);
+          win.addEventListener("pagehide", (event) => {
             const {element, container, nextSibling} = newPipElement;
+            debug.log("[PIPElement:CTX] pagehide event:", event, "pipElement:", newPipElement);
             container.insertBefore(element, nextSibling);
+            
             pipWindow = null;
           });
-        });
+        }
+        
+        // request pip window        
+        if (pipWindow && continuePicking) {
+          debug.log("[PIPElement:CTX] ADD to existing pipWindow");
+          addToPipWindow(pipWindow, newPipElement);
+        } else {
+          documentPictureInPicture.requestWindow().then((win) => {
+            // close old pipWindow if exists
+            if (pipWindow) {
+              debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
+              pipWindow.close();
+            }
+
+            pipWindow = win;
+            debug.log("[PIPElement:CTX] ADD to NEW pipWindow");
+
+            addToPipWindow(pipWindow, newPipElement);
+          });
+        }
       }
       
       elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
