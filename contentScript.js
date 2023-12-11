@@ -100,7 +100,7 @@
           win.addEventListener("pagehide", (event) => {
             const {element, container, nextSibling} = newPipElement;
             debug.log("[PIPElement:CTX] pagehide event:", event, "pipElement:", newPipElement);
-            container.insertBefore(element, nextSibling);
+            (container || document).insertBefore(element, nextSibling);
             
             pipWindow = null;
           });
