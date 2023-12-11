@@ -73,81 +73,97 @@
     });
   }
 
-  // create "disabled" elementPicker on page load
-  let elementPicker = new ElementPicker(options);
+  let elementPicker = null;
 
-  // elementPicker.hoverBox.style.cursor = CURSORS[0];
-  elementPicker.action = {
-    trigger: "mouseup",
-    
-    callback: ((event, target) => {
-      debug.log("[PIPElement:CTX] event:", event);
-      let continuePicking = event.shiftKey;
-      event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
-      if (event.triggered) {
-        debug.log("[PIPElement:CTX] target:", target);
-        debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
-        lastTriggeredElement = elementPicker.hoverInfo.element;
-        
-        const newPipElement = {element: lastTriggeredElement, container: lastTriggeredElement.parentElement, nextSibling: lastTriggeredElement.nextSibling};
-        
-        // add element to pip window, restore element on "pagehide" event
-        function addToPipWindow(win, newPipElement) {
-          win.document.body.append(newPipElement.element);
-          copyStyleSheetsToPipWindow(win);
-          
-          // move the pip-ed element back when the Picture-in-Picture window closes
-          win.addEventListener("pagehide", (event) => {
-            const {element, container, nextSibling} = newPipElement;
-            debug.log("[PIPElement:CTX] pagehide event:", event, "pipElement:", newPipElement);
-            (container || document).insertBefore(element, nextSibling);
-            
-            pipWindow = null;
-          });
-        }
-        
-        // request pip window        
-        if (pipWindow && continuePicking) {
-          debug.log("[PIPElement:CTX] ADD to existing pipWindow");
-          addToPipWindow(pipWindow, newPipElement);
-        } else {
-          const width = 0; // elementPicker.hoverInfo.width + 22;
-          const height = 0; // elementPicker.hoverInfo.height + 22;
-          documentPictureInPicture.requestWindow({width: width, height: height}).then((win) => {
-            // close old pipWindow if exists
-            if (pipWindow) {
-              debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
-              pipWindow.close();
-            }
+  // close picker and set var to null
+  function closePicker() {
+    debug.log("[PIPElement:CTX] closePicker()");
+    if (elementPicker) {
+      elementPicker.enabled = false;
+      elementPicker.close();
+      elementPicker = null;
+    }
+  }
 
-            pipWindow = win;
-            debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);
+  function createPicker() {
+    debug.log("[PIPElement:CTX] createPicker()");
 
-            addToPipWindow(pipWindow, newPipElement);
-          });
-        }
-      }
+    elementPicker = new ElementPicker(options);
+
+    // elementPicker.hoverBox.style.cursor = CURSORS[0];
+    elementPicker.action = {
+      trigger: "mouseup",
       
-      elementPicker.enabled = continuePicking;
-    })
+      callback: ((event, target) => {
+        debug.log("[PIPElement:CTX] event:", event);
+        let continuePicking = event.shiftKey;
+        event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
+        if (event.triggered) {
+          debug.log("[PIPElement:CTX] target:", target);
+          debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
+          lastTriggeredElement = elementPicker.hoverInfo.element;
+          
+          const newPipElement = {element: lastTriggeredElement, container: lastTriggeredElement.parentElement, nextSibling: lastTriggeredElement.nextSibling};
+          
+          // add element to pip window, restore element on "pagehide" event
+          function addToPipWindow(win, newPipElement) {
+            win.document.body.append(newPipElement.element);
+            copyStyleSheetsToPipWindow(win);
+            
+            // move the pip-ed element back when the Picture-in-Picture window closes
+            win.addEventListener("pagehide", (event) => {
+              const {element, container, nextSibling} = newPipElement;
+              debug.log("[PIPElement:CTX] pagehide event:", event, "pipElement:", newPipElement);
+              (container || document).insertBefore(element, nextSibling);
+              
+              pipWindow = null;
+            });
+          }
+          
+          // request pip window        
+          if (pipWindow && continuePicking) {
+            debug.log("[PIPElement:CTX] ADD to existing pipWindow");
+            addToPipWindow(pipWindow, newPipElement);
+          } else {
+            const width = 0; // elementPicker.hoverInfo.width + 22;
+            const height = 0; // elementPicker.hoverInfo.height + 22;
+            documentPictureInPicture.requestWindow({width: width, height: height}).then((win) => {
+              // close old pipWindow if exists
+              if (pipWindow) {
+                debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
+                pipWindow.close();
+              }
+
+              pipWindow = win;
+              debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);
+
+              addToPipWindow(pipWindow, newPipElement);
+            });
+          }
+        }
+        
+        elementPicker.enabled = continuePicking && event.triggered;
+        
+        if (!elementPicker.enabled) closePicker();
+      })
+    }
   }
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     debug.log("[PIPElement:CTX]", msg);
     const { event, data } = msg;
 
-    if (event === "enablePicker") {
-      elementPicker.enabled = data?.enable ?? true;
-      elementPicker.hoverBox.style.cursor = CURSORS[0];
-    } else if (event === "takenScreenshot") {
-      let dataURL = data.dataURL;
-      let hoverInfo = data.hoverInfo;
-      let continuePicking = data?.continuePicking;
-      
-      if (continuePicking) {
+    if (event === "togglePicker") {
+      let enabled = elementPicker?.enabled ?? false;
+      let toggledEnable = !enabled;
+      if (toggledEnable) {
+        createPicker();
         elementPicker.enabled = true;
-        elementPicker.highlight(lastTriggeredElement);
+        elementPicker.hoverBox.style.cursor = CURSORS[0];
+      } else {
+        closePicker();
       }
+    } else if (event === "other event") {
     }
   });
 
@@ -155,8 +171,8 @@
 
   // close picker when pressing ESC
   keyEventContainer.addEventListener('keyup', function(e) {
-    if (e.code === 'Escape' && elementPicker.enabled) {
-      elementPicker.enabled = false;
+    if (e.code === 'Escape' && elementPicker?.enabled) {
+      closePicker();
       debug.log("[PIPElement:CTX] user aborted");
     }
   }, true);
@@ -164,13 +180,13 @@
   keyEventContainer.addEventListener('keydown', function(e) {
     let target = null;
     let newTarget = null;
-    if (e.code === 'Space' && elementPicker.enabled) {
+    if (e.code === 'Space' && elementPicker?.enabled) {
       target = elementPicker.hoverInfo.element;
       debug.log("[PIPElement:CTX] space-clicked target:", target);
       e.preventDefault();
       e.triggered = true; // checked inside action callback
       elementPicker.trigger(e);
-    } else if (elementPicker.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
+    } else if (elementPicker?.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
       target = elementPicker.hoverInfo.element;
 
       let innermostTargetAtPoint = null; // first non-picker-iframe element
@@ -214,7 +230,7 @@
   // change picker cursor when holding SHIFT
   function updateCursor(eventInfo) {
     let {keyUp, event} = eventInfo;
-    if (elementPicker.enabled) {
+    if (elementPicker?.enabled) {
       let cursorIdx = +event.shiftKey;
       if (elementPicker.hoverBox.style.cursor != CURSORS[cursorIdx]) {
         debug.log('[PIPElement:CTX] change cursor to ' + CURSORS[cursorIdx]);
