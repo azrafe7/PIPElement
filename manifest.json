@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "View highligthed elements (or page) in Picture-In-Picture",
   "manifest_version": 3,
+  "minimum_chrome_version": "116",
   "permissions": ["activeTab", "contextMenus"],
   "background": {
     "service_worker": "background.js"
