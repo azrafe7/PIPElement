@@ -1,0 +1,28 @@
+{
+  "name": "Document PIP",
+  "version": "0.1.0",
+  "description": "View highligthed element (or page) in Picture-In-Picture",
+  "manifest_version": 3,
+  "permissions": ["activeTab", "contextMenus"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["ElementPicker.js", "contentScript.js"],
+      "css": ["ElementPicker.css"],
+      "all_frames": false
+    }
+  ],
+  "cross_origin_opener_policy": {
+    "value": "same-origin"
+  },
+  "icons": {
+  },
+  "action": {
+    "default_icon": {
+    },
+    "default_title": "Document PIP"
+  }
+}
