@@ -2,7 +2,7 @@
 
 (async () => {
   
-  const DEBUG = false;
+  const DEBUG = true;
   let debug = {
     log: DEBUG ? console.log.bind(console) : () => {} // log or NO_OP
   }
@@ -27,6 +27,7 @@
   let lastTriggeredElement = null;
 
   let pipWindow = null;
+  let pipElements = [];
 
   /* if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
@@ -49,6 +50,30 @@
     hoverBoxInfoId: 'pip_picker_info',
   }
 
+  function copyStyleSheetsToPipWindow() {
+    if (!pipWindow) return;
+    
+    // copy style sheets over from the initial document
+    // so that the elements look the same
+    [...document.styleSheets].forEach((styleSheet) => {
+      try {
+        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+        const style = document.createElement('style');
+
+        style.textContent = cssRules;
+        pipWindow.document.head.appendChild(style);
+      } catch (e) {
+        const link = document.createElement('link');
+
+        link.rel = 'stylesheet';
+        link.type = styleSheet.type;
+        link.media = styleSheet.media;
+        link.href = styleSheet.href;
+        pipWindow.document.head.appendChild(link);
+      }
+    });
+  }
+
   // create "disabled" elementPicker on page load
   let elementPicker = new ElementPicker(options);
 
@@ -64,16 +89,33 @@
         debug.log("[PIPElement:CTX] target:", target);
         debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
         lastTriggeredElement = elementPicker.hoverInfo.element;
-        elementPicker.hoverInfo.element = null; // not serializable
-        const hoverInfoClone = structuredClone(elementPicker.hoverInfo);
-        setTimeout(() => { // to ensure picker overlay is removed
-          chrome.runtime.sendMessage(
-            {
-              event: "takeScreenshot",
-              data: {hoverInfo: hoverInfoClone, continuePicking: continuePicking},
-            },
-          );
-        }, 50);
+        
+        const newPipElement = {element: lastTriggeredElement, container: lastTriggeredElement.parentElement, nextSibling: lastTriggeredElement.nextSibling};
+        pipElements = [newPipElement];
+        
+        // request pip window        
+        documentPictureInPicture.requestWindow().then((win) => {
+          // close old pipWindow if exists
+          if (pipWindow) {
+            console.log("closing prev pipWindow");
+            pipWindow.close();
+          }
+
+          debug.log("[PIPElement:CTX] prev pip window:", pipWindow);
+          pipWindow = win;
+          debug.log("[PIPElement:CTX] new pip window:", win);
+          
+          pipWindow.document.body.append(newPipElement.element);
+          copyStyleSheetsToPipWindow();
+          
+          // move the pip-ed element back when the Picture-in-Picture window closes
+          pipWindow.addEventListener("pagehide", (event) => {
+            debug.log("[PIPElement:CTX] pagehide event:", event);
+            const {element, container, nextSibling} = newPipElement;
+            container.insertBefore(element, nextSibling);
+            pipWindow = null;
+          });
+        });
       }
       
       elementPicker.enabled = false; // always disable picker highlight (so that it's not saved in the screenshot)
