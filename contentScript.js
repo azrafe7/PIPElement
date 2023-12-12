@@ -103,12 +103,17 @@
           debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
           lastTriggeredElement = elementPicker.hoverInfo.element;
           
-          const newPipElement = {element: lastTriggeredElement, container: lastTriggeredElement.parentElement, nextSibling: lastTriggeredElement.nextSibling};
+          const newPipElement = {
+            element: lastTriggeredElement, 
+            container: lastTriggeredElement.parentElement, 
+            nextSibling: lastTriggeredElement.nextSibling != elementPicker.iframe ? lastTriggeredElement.nextSibling : null
+          };
           
           // add element to pip window, restore element on "pagehide" event
           function addToPipWindow(win, newPipElement) {
             win.document.body.append(newPipElement.element);
             copyStyleSheetsToPipWindow(win);
+            debug.log("[PIPElement:CTX] add pipElement:", newPipElement);
             
             // move the pip-ed element back when the Picture-in-Picture window closes
             win.addEventListener("pagehide", (event) => {
