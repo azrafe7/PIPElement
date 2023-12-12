@@ -118,7 +118,7 @@
             // move the pip-ed element back when the Picture-in-Picture window closes
             win.addEventListener("pagehide", (event) => {
               const {element, container, nextSibling} = newPipElement;
-              debug.log("[PIPElement:CTX] pagehide event:", event, "pipElement:", newPipElement);
+              debug.log("[PIPElement:CTX] restore ('pagehide' event):", event, "pipElement:", newPipElement);
               (container || document).insertBefore(element, nextSibling);
               
               pipWindow = null;
