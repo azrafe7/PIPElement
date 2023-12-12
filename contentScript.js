@@ -106,7 +106,7 @@
           const newPipElement = {
             element: lastTriggeredElement, 
             container: lastTriggeredElement.parentElement, 
-            nextSibling: lastTriggeredElement.nextSibling != elementPicker.iframe ? lastTriggeredElement.nextSibling : null
+            nextElementSibling: lastTriggeredElement.nextElementSibling != elementPicker.iframe ? lastTriggeredElement.nextElementSibling : null
           };
           
           // add element to pip window, restore element on "pagehide" event
@@ -117,9 +117,9 @@
             
             // move the pip-ed element back when the Picture-in-Picture window closes
             win.addEventListener("pagehide", (event) => {
-              const {element, container, nextSibling} = newPipElement;
+              const {element, container, nextElementSibling} = newPipElement;
               debug.log("[PIPElement:CTX] restore ('pagehide' event):", event, "pipElement:", newPipElement);
-              (container || document).insertBefore(element, nextSibling);
+              (container || document).insertBefore(element, nextElementSibling);
               
               pipWindow = null;
             });
