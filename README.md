@@ -22,6 +22,9 @@ Also note that DocumentPictureInPicture doesn't allow navigation, so clicking on
 
 For more info about the DocumentPictureInPicture API see also here: https://developer.mozilla.org/en-US/docs/Web/API/Document_Picture-in-Picture_API
 
+
 REPO: https://github.com/azrafe7/PIPElement
+
 ISSUES: https://github.com/azrafe7/PIPElement/issues
+
 CHANGELOG: https://github.com/azrafe7/PIPElement/blob/main/CHANGELOG.md
