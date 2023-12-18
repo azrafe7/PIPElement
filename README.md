@@ -14,5 +14,8 @@ Use Q/A keys to expand/reduce the highligthed selection, then press SPACE to add
 
 You can also use Alt+P to activate the picker (or configure an alternate shortcut key in the extension settings).
 
+NOTE: Although the extension tries to keep the elements stylized as in the original page, 
+the underlying technology ([DocumentPictureInPicture](https://developer.chrome.com/docs/web-platform/document-picture-in-picture)) cannot ensure the same styles are applied consistently
+(either because DOM layout is different in the PIP Window than in the original page, and CSS doesn't work in the intended way, or JS is used to style the page).
 
 CHANGELOG: https://github.com/azrafe7/PIPElement/blob/main/CHANGELOG.md
