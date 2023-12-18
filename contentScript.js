@@ -49,6 +49,15 @@
     hoverBoxInfoId: 'pip_picker_info',
   }
 
+  function injectCSSFile(win, cssFile) {
+    const link = document.createElement('link');
+
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = cssFile;
+    win.document.head.appendChild(link);
+  }
+
   function copyStyleSheetsToPipWindow(win) {
     if (!win) return;
     
@@ -102,12 +111,13 @@
     // add element to pip window, restore element on "pagehide" event
     function _addToPipWindow(win, newPipElement) {
       win.document.body.append(newPipElement.element);
-      copyStyleSheetsToPipWindow(win);
+      newPipElement.element.classList.add('piped-element');
       debug.log("[PIPElement:CTX] add pipElement:", newPipElement);
       
       // move the pip-ed element back when the Picture-in-Picture window closes
       win.addEventListener("pagehide", (event) => {
         const {element, container, nextElementSibling} = newPipElement;
+        newPipElement.element.classList.remove('piped-element');
         debug.log("[PIPElement:CTX] restore ('pagehide' event):", event, "pipElement:", newPipElement);
         (container || document).insertBefore(element, nextElementSibling);
         
@@ -128,6 +138,9 @@
           debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
           pipWindow.close();
         }
+
+        copyStyleSheetsToPipWindow(win);
+        injectCSSFile(win, chrome.runtime.getURL('PIPElement.css'));
 
         pipWindow = win;
         debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);

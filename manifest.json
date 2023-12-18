@@ -16,6 +16,12 @@
       "all_frames": false
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["PIPElement.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "cross_origin_opener_policy": {
     "value": "same-origin"
   },
