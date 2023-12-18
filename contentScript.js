@@ -93,12 +93,6 @@
     if (elementPicker) debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
     lastTriggeredElement = target;
     
-    console.log("shadowRoot:", lastTriggeredElement.shadowRoot);
-    
-    /* if (lastTriggeredElement.shadowRoot instanceof DocumentFragment) {
-      lastTriggeredElement = lastTriggeredElement.shadowRoot;
-    } */
-    
     const newPipElement = {
       element: lastTriggeredElement, 
       container: lastTriggeredElement.parentElement, 
