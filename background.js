@@ -9,7 +9,7 @@ function createContextMenu() {
   chrome.contextMenus.removeAll(function() {
     chrome.contextMenus.create({
       id: "PIPElement_onPIPPageContextMenu",
-      title: "View Current Page Picture-In-Picture...",
+      title: "View current page Picture-In-Picture...",
       contexts: contexts,
     });
   });
