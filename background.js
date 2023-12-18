@@ -5,11 +5,12 @@ console.log(manifest.name + " v" + manifest.version);
 
 // add contextMenu entry to action button
 function createContextMenu() {
+  const contexts = ["page", "frame", "selection", "link", "editable", "image", "video", "audio"]; // all but "action" context
   chrome.contextMenus.removeAll(function() {
     chrome.contextMenus.create({
       id: "PIPElement_onPIPPageContextMenu",
       title: "View Current Page Picture-In-Picture...",
-      contexts: ["action"],
+      contexts: contexts,
     });
   });
 }
