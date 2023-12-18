@@ -85,6 +85,64 @@
     }
   }
 
+  function addToPipWindow(target, options={}) {
+    const defaults = { append:false };
+    options = {...defaults, ...options};
+    
+    debug.log("[PIPElement:CTX] target:", target);
+    if (elementPicker) debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
+    lastTriggeredElement = target;
+    
+    console.log("shadowRoot:", lastTriggeredElement.shadowRoot);
+    
+    /* if (lastTriggeredElement.shadowRoot instanceof DocumentFragment) {
+      lastTriggeredElement = lastTriggeredElement.shadowRoot;
+    } */
+    
+    const newPipElement = {
+      element: lastTriggeredElement, 
+      container: lastTriggeredElement.parentElement, 
+      nextElementSibling: lastTriggeredElement.nextElementSibling != elementPicker?.iframe ? lastTriggeredElement.nextElementSibling : null
+    };
+    
+    // add element to pip window, restore element on "pagehide" event
+    function _addToPipWindow(win, newPipElement) {
+      win.document.body.append(newPipElement.element);
+      copyStyleSheetsToPipWindow(win);
+      debug.log("[PIPElement:CTX] add pipElement:", newPipElement);
+      
+      // move the pip-ed element back when the Picture-in-Picture window closes
+      win.addEventListener("pagehide", (event) => {
+        const {element, container, nextElementSibling} = newPipElement;
+        debug.log("[PIPElement:CTX] restore ('pagehide' event):", event, "pipElement:", newPipElement);
+        (container || document).insertBefore(element, nextElementSibling);
+        
+        pipWindow = null;
+      });
+    }
+    
+    // request pip window        
+    if (pipWindow && options.append) {
+      debug.log("[PIPElement:CTX] ADD to existing pipWindow");
+      _addToPipWindow(pipWindow, newPipElement);
+    } else {
+      const width = 0; // elementPicker.hoverInfo.width + 22;
+      const height = 0; // elementPicker.hoverInfo.height + 22;
+      documentPictureInPicture.requestWindow({width: width, height: height}).then((win) => {
+        // close old pipWindow if exists
+        if (pipWindow) {
+          debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
+          pipWindow.close();
+        }
+
+        pipWindow = win;
+        debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);
+
+        _addToPipWindow(pipWindow, newPipElement);
+      });
+    }
+  }
+
   function createPicker() {
     debug.log("[PIPElement:CTX] createPicker()");
 
@@ -99,52 +157,7 @@
         let continuePicking = event.shiftKey;
         event.triggered = event.triggered ?? event.button == 0; // only proceed if left mouse button was pressed or "event.triggered" was set
         if (event.triggered) {
-          debug.log("[PIPElement:CTX] target:", target);
-          debug.log("[PIPElement:CTX] info:", elementPicker.hoverInfo);
-          lastTriggeredElement = elementPicker.hoverInfo.element;
-          
-          const newPipElement = {
-            element: lastTriggeredElement, 
-            container: lastTriggeredElement.parentElement, 
-            nextElementSibling: lastTriggeredElement.nextElementSibling != elementPicker.iframe ? lastTriggeredElement.nextElementSibling : null
-          };
-          
-          // add element to pip window, restore element on "pagehide" event
-          function addToPipWindow(win, newPipElement) {
-            win.document.body.append(newPipElement.element);
-            copyStyleSheetsToPipWindow(win);
-            debug.log("[PIPElement:CTX] add pipElement:", newPipElement);
-            
-            // move the pip-ed element back when the Picture-in-Picture window closes
-            win.addEventListener("pagehide", (event) => {
-              const {element, container, nextElementSibling} = newPipElement;
-              debug.log("[PIPElement:CTX] restore ('pagehide' event):", event, "pipElement:", newPipElement);
-              (container || document).insertBefore(element, nextElementSibling);
-              
-              pipWindow = null;
-            });
-          }
-          
-          // request pip window        
-          if (pipWindow && continuePicking) {
-            debug.log("[PIPElement:CTX] ADD to existing pipWindow");
-            addToPipWindow(pipWindow, newPipElement);
-          } else {
-            const width = 0; // elementPicker.hoverInfo.width + 22;
-            const height = 0; // elementPicker.hoverInfo.height + 22;
-            documentPictureInPicture.requestWindow({width: width, height: height}).then((win) => {
-              // close old pipWindow if exists
-              if (pipWindow) {
-                debug.log("[PIPElement:CTX] CLOSE existing pipWindow");
-                pipWindow.close();
-              }
-
-              pipWindow = win;
-              debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);
-
-              addToPipWindow(pipWindow, newPipElement);
-            });
-          }
+          addToPipWindow(target, { append: continuePicking });
         }
         
         elementPicker.enabled = continuePicking && event.triggered;
@@ -168,7 +181,9 @@
       } else {
         closePicker();
       }
-    } else if (event === "other event") {
+    } else if (event === "PIPPage") {
+      if (elementPicker?.enabled) closePicker();
+      addToPipWindow(document.documentElement, { append: false });
     }
   });
 
@@ -185,6 +200,7 @@
   keyEventContainer.addEventListener('keydown', function(e) {
     let target = null;
     let newTarget = null;
+    let newTargetIdx = null;
     if (e.code === 'Space' && elementPicker?.enabled) {
       target = elementPicker.hoverInfo.element;
       debug.log("[PIPElement:CTX] space-clicked target:", target);
@@ -209,22 +225,25 @@
       
       const ancestorsAndSelfLength = ancestorsAndSelf.length;
       const targetIdx = ancestorsAndSelf.indexOf(target);
+      newTargetIdx = targetIdx;
       const targetHasNext = targetIdx <= (ancestorsAndSelfLength - 2);
       const targetHasPrev = targetIdx > 0;
       if (e.code === 'KeyQ' && targetHasNext) { // drill up
-        newTarget = ancestorsAndSelf[targetIdx + 1];
-        if (newTarget.contains(elementPicker.iframe)) {
+        newTargetIdx = targetIdx + 1;
+        newTarget = ancestorsAndSelf[newTargetIdx];
+        /*if (newTarget.contains(elementPicker.iframe)) {
           newTarget = target;
-        }
+        }*/
         debug.log("[PIPElement:CTX] Q-pressed new ↑ target:", newTarget);
       } else if (e.code === 'KeyA' && targetHasPrev) { // drill down
-        newTarget = ancestorsAndSelf[targetIdx - 1];
-        if (newTarget.contains(elementPicker.iframe)) {
+        newTargetIdx = targetIdx - 1;
+        newTarget = ancestorsAndSelf[newTargetIdx];
+        /*if (newTarget.contains(elementPicker.iframe)) {
           newTarget = target;
-        }
+        }*/
         debug.log("[PIPElement:CTX] A-pressed new ↓ target:", newTarget);
       }
-      debug.log(`${targetIdx}/${ancestorsAndSelfLength}`, 'newTarget', targetHasPrev, targetHasNext, newTarget);
+      debug.log(`${newTargetIdx}/${ancestorsAndSelfLength - 1}`, 'newTarget', targetHasPrev, targetHasNext, newTarget, ancestorsAndSelf);
       if (newTarget && newTarget != target) {
         elementPicker.highlight(newTarget);
       }
