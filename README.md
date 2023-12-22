@@ -3,7 +3,7 @@ View highligthed elements (or page) Picture-In-Picture.
 
 [![PIPElement](./webstore_assets/screenshot_01.png)](./webstore_assets/screenshot_01.png)
 
-You can find it here: https://chrome.google.com/webstore/detail/...
+You can find it here: https://chromewebstore.google.com/detail/pipelement/onogpdnplalgnnnmlgaaodkeiijgmhmf
 
 # Overview
 View any element (or the whole page) Picture-In-Picture.
@@ -16,7 +16,7 @@ You can also use Alt+P to activate the picker (or configure an alternate shortcu
 
 **NOTE**: Although the extension tries to keep the elements stylized as in the original page, 
 the underlying technology ([DocumentPictureInPicture](https://developer.chrome.com/docs/web-platform/document-picture-in-picture)) cannot ensure the same styles are applied consistently
-(either because the DOM layout is different in the PIP Window vs the original page, so CSS doesn't work in the intended way, or JS is used to style the page).
+(either because the DOM layout is different in the PIP Window vs the original page - so CSS doesn't work in the intended way - or JS is used to style the page).
 
 Also note that DocumentPictureInPicture doesn't allow navigation, so clicking on links in the PIP Window will close it and restore elements to the original page.
 
