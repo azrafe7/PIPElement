@@ -191,6 +191,8 @@
     } else if (event === "PIPPage") {
       if (elementPicker?.enabled) closePicker();
       addToPipWindow(document.documentElement, { append: false });
+    } else if (event === 'checkState') {
+      sendResponse({event: 'setState', data: { allowed:true }});
     }
   });
 
