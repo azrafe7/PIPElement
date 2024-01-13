@@ -146,6 +146,8 @@
         debug.log(`[PIPElement:CTX] ADD to NEW pipWindow (w:${width}, h:${height})`);
 
         _addToPipWindow(pipWindow, newPipElement);
+      }).catch((error) => {
+        console.warn(`[PIPElement:CTX] Whoops... ${error.message}`);
       });
     }
   }

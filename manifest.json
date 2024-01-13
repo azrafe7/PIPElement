@@ -1,6 +1,6 @@
 {
   "name": "PIPElement",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "View highligthed elements (or page) Picture-In-Picture",
   "manifest_version": 3,
   "minimum_chrome_version": "116",

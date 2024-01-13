@@ -6,18 +6,30 @@ console.log(manifest.name + " v" + manifest.version);
 // add contextMenu entry to action button
 const contexts = ["page", "frame", "selection", "link", "editable", "image", "video", "audio"]; // all but "action" context
 const PIPPageContextId = "PIPElement_onPIPPageContextMenu";
-function createContextMenu() {
+function createContextMenu(options={}) {
+  const defaults = { enable:true };
+  options = { ...defaults, ...options };
   chrome.contextMenus.removeAll(function() {
-    chrome.contextMenus.create({
-      id: PIPPageContextId,
-      title: "View current page Picture-In-Picture...",
-      contexts: contexts,
-    });
+    // console.log("remove");
+    if (chrome.runtime.lastError) {
+      console.warn('Whoops...', chrome.runtime.lastError.message);
+    } else if (options.enable) {
+      chrome.contextMenus.create({
+        id: PIPPageContextId,
+        title: "View current page Picture-In-Picture...",
+        contexts: contexts,
+      }, () => {
+        // console.log("create");
+        if (chrome.runtime.lastError) {
+          console.warn('Whoops...', chrome.runtime.lastError.message);
+        }      
+      });
+    }
   });
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  createContextMenu();
+  // createContextMenu({enable:true});
 });
 
 // enable picker when clicking the browser action
@@ -42,18 +54,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   console.log("[PIPElement:BG] onContextMenuClicked:", [info, tab]);
 
   if (info.menuItemId === PIPPageContextId) {
+    const [activeTab] = await chrome.tabs.query({active: true, currentWindow: true});
     console.log("[PIPElement:BG] opening page Picture-In-Picture...");
-    chrome.tabs.sendMessage(
-      tab.id,
-      {
-        event: "PIPPage",
-        data: { enable: false },
-      }
-    );
-    let url = "";
-    let focusNewTab = true;
-    let [activeTab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-    // chrome.tabs.create({url: dataURL, index: activeTab.index + 1, active: focusNewTab});
+    if (tab.id <= 0) {
+      console.log("[PIPElement:BG] tabId <= 0:", tab.id, activeTab);
+      tab.id = activeTab?.id;
+    }
+    if (tab.id >= 0) {
+      chrome.tabs.sendMessage(
+        tab.id,
+        {
+          event: "PIPPage",
+          data: { enable: false },
+        }
+      );
+    } else {
+      console.warn(`[PIPElement:BG] Whoops... No valid tab.id found.`);
+    }
   }
 });
 
@@ -99,21 +116,23 @@ async function setState(allowed, tabId=null) {
     actionTitle = `${manifest.action.default_title} (DISABLED for this site)`;
     chrome.action.setTitle({tabId: tabId, title: actionTitle});
     chrome.action.disable(tabId);
-    chrome.contextMenus.update(PIPPageContextId, { enabled:allowed }, () => {
+    /*chrome.contextMenus.update(PIPPageContextId, { enabled:allowed }, () => {
       if (chrome.runtime.lastError) {
         console.warn('Whoops...', chrome.runtime.lastError.message);
       }
       console.log("contextMenu disabled")
-    });
+    });*/
+    createContextMenu({enable:allowed});
   } else {
     chrome.action.setTitle({tabId: tabId, title: actionTitle});
     chrome.action.enable(tabId);
-    chrome.contextMenus.update(PIPPageContextId, { enabled:allowed }, () => {
+    /* chrome.contextMenus.update(PIPPageContextId, { enabled:allowed }, () => {
       if (chrome.runtime.lastError) {
         console.warn('Whoops...', chrome.runtime.lastError.message);
       }
       console.log("contextMenu enabled")
-    });
+    }); */
+    createContextMenu({enable:allowed});
   }
 }
 
