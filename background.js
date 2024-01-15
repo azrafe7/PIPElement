@@ -3,8 +3,9 @@
 let manifest = chrome.runtime.getManifest();
 console.log(manifest.name + " v" + manifest.version);
 
-// add contextMenu entry to action button
+// add/remove contextMenu entry
 const contexts = ["page", "frame", "selection", "link", "editable", "image", "video", "audio"]; // all but "action" context
+// const contexts = ["action"]; // only "action" context
 const PIPPageContextId = "PIPElement_onPIPPageContextMenu";
 function createContextMenu(options={}) {
   const defaults = { enable:true };
@@ -109,11 +110,11 @@ async function setState(allowed, tabId=null) {
   
   // tabId = null;
   
-  let actionTitle = `${manifest.action.default_title}`;
+  let actionTitle = `${manifest.action.default_title} v${manifest.version}`;
   chrome.action.setTitle({tabId: tabId, title: actionTitle});
   
   if (!allowed) {
-    actionTitle = `${manifest.action.default_title} (DISABLED for this site)`;
+    actionTitle = actionTitle + ' (DISABLED for this site)';
     chrome.action.setTitle({tabId: tabId, title: actionTitle});
     chrome.action.disable(tabId);
     /*chrome.contextMenus.update(PIPPageContextId, { enabled:allowed }, () => {
