@@ -79,7 +79,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 async function checkState(tabId=null) {
   if (tabId == null) {
     const [activeTab] = await chrome.tabs.query({active: true, currentWindow: true});
-    tabId = activeTab.id;
+    tabId = activeTab?.id;
   }
   console.log('checkState for', 'tabId', tabId);
   
@@ -149,7 +149,12 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   console.log("onActivated activeInfo", activeInfo);
 
   setState(false);
-  checkState(activeTab.id);
+  checkState(activeInfo.tabId);
+});
+
+chrome.windows.onFocusChanged.addListener(async (windowId) => {
+  let [activeTab] = await chrome.tabs.query({active: true, currentWindow: true});
+  console.log("onFocusChanged", windowId, activeTab);
 });
 
 setState(false);
