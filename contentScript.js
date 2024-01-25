@@ -108,6 +108,15 @@
       nextElementSibling: lastTriggeredElement.nextElementSibling != elementPicker?.iframe ? lastTriggeredElement.nextElementSibling : null
     };
     
+    if (lastTriggeredElement.tagName.toLowerCase() === 'video') {
+      const videoElement = lastTriggeredElement;
+      videoElement.requestPictureInPicture().then(() => {
+        debug.log("[PIPElement:CTX] video PictureInPicture:", newPipElement);
+      }).catch((error) => {
+        console.warn(`[PIPElement:CTX] Whoops... ${error.message}`);
+      });
+    }
+    
     // add element to pip window, restore element on "pagehide" event
     function _addToPipWindow(win, newPipElement) {
       win.document.body.append(newPipElement.element);
