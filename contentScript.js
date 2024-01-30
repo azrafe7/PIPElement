@@ -230,7 +230,26 @@
     } else if (elementPicker?.enabled && (e.code === 'KeyQ' || e.code === 'KeyA')) {
       target = elementPicker.hoverInfo.element;
 
+      // temporarily set pointer-events:all for all videos
+      // (as pointer-events:none will prevent elements to be returned by elementsFromPoint())
+      let videos = Array.from(document.querySelectorAll('video'));
+      let fixedVideosMap = new Map(); // [element: { prop, value, priority }]
+      const POINTER_EVENTS = 'pointer-events';
+      for (let video of videos) {
+        let computedStyle = getComputedStyle(video);
+        // console.log('video:', video, 'computedStyle', POINTER_EVENTS + ':', computedStyle[POINTER_EVENTS]);
+        if (computedStyle[POINTER_EVENTS] === 'none') {
+          let value = video.style.getPropertyValue(POINTER_EVENTS);
+          let priority = video.style.getPropertyPriority(POINTER_EVENTS);
+          fixedVideosMap.set(video, { prop:POINTER_EVENTS, value:value, priority:priority });
+          video.style.setProperty(POINTER_EVENTS, 'all', 'important');
+        }
+      }
+      debug.log('fixedVideosMap:', fixedVideosMap)
+      
       let innermostTargetAtPoint = null; // first non-picker-iframe element
+      
+      // get elements at point
       let elementsAtPoint = document.elementsFromPoint(elementPicker._lastClientX, elementPicker._lastClientY);
       for (let el of elementsAtPoint) {
         if (el != elementPicker.iframe) {
@@ -238,29 +257,26 @@
           break;
         }
       }
-      const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
-      if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1); // remove iframe from array
+       // remove iframe from array (if present)
+       const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
+      if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1);
       
+      // restore saved pointer-events prop of fixedVideosMap
+      for (let [video, style] of fixedVideosMap.entries()) {
+        video.style.setProperty(style.prop, style.value, style.priority);
+      }
+      fixedVideosMap.clear();
+
       // build ancestors array
       let ancestorsAndSelf = [];
       for (let el=innermostTargetAtPoint; el != null; el = el.parentElement) {
         ancestorsAndSelf.push(el);
       }
       
-      // all videos direct children of elementsAtPoint and with a src attribute
-      // (which MAY be not included in ancestors or elementsAtPoint, f.e. when they have pointer-events set to none)
-      let videos = [];
-      let elementsAtPointSet = new Set(elementsAtPoint);
-      for (let el of elementsAtPoint) {
-        let videoChildren = Array.from(el.children).filter((c) => c.tagName.toLowerCase() === 'video' && c.src && !elementsAtPointSet.has(c));
-        videos.push(...videoChildren);
-      }
-      
-      debug.log('videos:', videos);
       debug.log('ancestors:', ancestorsAndSelf);
       debug.log('elementsAtPoint:', [elementPicker._lastClientX, elementPicker._lastClientY], elementsAtPoint);
       
-      let elementsToMerge = elementsAtPoint.concat(videos);
+      let elementsToMerge = elementsAtPoint;
       
       // merge ancestors with elementsToMerge
       let mergeAtIndices = [];
