@@ -264,8 +264,8 @@
           break;
         }
       }
-       // remove iframe from array (if present)
-       const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
+      // remove iframe from array (if present)
+      const pickerIFrameIdx = elementsAtPoint.indexOf(elementPicker.iframe);
       if (pickerIFrameIdx >= 0) elementsAtPoint.splice(pickerIFrameIdx, 1);
       
       // restore saved pointer-events prop of fixedVideosMap
@@ -295,6 +295,7 @@
         for (let [idx, ancestor] of Object.entries(ancestorsAndSelf)) {
           if (ancestor.contains(el)) {
             mergeAtIndices.push({ element:el, index:idx });
+            ancestorsSet.add(el);
             break;
           }
         }
