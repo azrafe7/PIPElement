@@ -1,8 +1,7 @@
 "use strict";
 
 (async () => {
-  
-  const DEBUG = false;
+  const DEBUG = true;
   let debug = {
     log: DEBUG ? console.log.bind(console) : () => {} // log or NO_OP
   }
@@ -157,6 +156,7 @@
         _addToPipWindow(pipWindow, newPipElement);
       }).catch((error) => {
         console.warn(`[PIPElement:CTX] Whoops... ${error.message}`);
+        alert(error.message);
       });
     }
   }
@@ -247,10 +247,25 @@
         ancestorsAndSelf.push(el);
       }
       
-      // merge ancestors with elementsAtPoint
+      // all videos direct children of elementsAtPoint and with a src attribute
+      // (which MAY be not included in ancestors or elementsAtPoint, f.e. when they have pointer-events set to none)
+      let videos = [];
+      let elementsAtPointSet = new Set(elementsAtPoint);
+      for (let el of elementsAtPoint) {
+        let videoChildren = Array.from(el.children).filter((c) => c.tagName.toLowerCase() === 'video' && c.src && !elementsAtPointSet.has(c));
+        videos.push(...videoChildren);
+      }
+      
+      debug.log('videos:', videos);
+      debug.log('ancestors:', ancestorsAndSelf);
+      debug.log('elementsAtPoint:', [elementPicker._lastClientX, elementPicker._lastClientY], elementsAtPoint);
+      
+      let elementsToMerge = elementsAtPoint.concat(videos);
+      
+      // merge ancestors with elementsToMerge
       let mergeAtIndices = [];
       let ancestorsSet = new Set(ancestorsAndSelf);
-      for (let el of elementsAtPoint) {
+      for (let el of elementsToMerge) {
         if (ancestorsSet.has(el)) {
           continue;
         }
