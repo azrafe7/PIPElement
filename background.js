@@ -82,6 +82,7 @@ async function checkState(tabId=null) {
     tabId = activeTab?.id;
   }
   console.log('checkState for', 'tabId', tabId);
+  if (!tabId) return;
   
   chrome.tabs.sendMessage(
     tabId,
