@@ -299,6 +299,7 @@
           }
         }
       }
+      debug.log('mergeAtIndices:', mergeAtIndices);
       for (let mergeInfo of mergeAtIndices.toReversed()) {
         const {element, index} = mergeInfo;
         if (index == -1) {
