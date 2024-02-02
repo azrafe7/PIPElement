@@ -155,8 +155,10 @@
 
         _addToPipWindow(pipWindow, newPipElement);
       }).catch((error) => {
-        console.warn(`[PIPElement:CTX] Whoops... ${error.message}`);
-        // alert(error.message);
+        if (!pipWindow) {
+          console.warn(`[PIPElement:CTX] Whoops... ${error.message}`, error);
+          alert('[PIPElement Warning]: ' + error.message);
+        }
       });
     }
   }
