@@ -1,7 +1,8 @@
  # CHANGELOG
 
- ### v0.2.3 (01 Feb 2024)
- - better merging of possible targets, and deduplicate them
+ ### v0.2.4 (02 Feb 2024)
+ - better merging of possible targets
+ - deduplicate targets (elementsAtPoint can return them twice)
  - alert on unsuccessful requestWindow
  - make picker consume and not propagate events when enabled
 
