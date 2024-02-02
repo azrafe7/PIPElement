@@ -28,7 +28,7 @@ For more info about the DocumentPictureInPicture API see also here: https://deve
 
 
 REPO: https://github.com/azrafe7/PIPElement
-<br/>
+
 Please report bugs/feature requests at https://github.com/azrafe7/PIPElement/issues
-<br/>
+
 CHANGELOG: https://github.com/azrafe7/PIPElement/blob/main/CHANGELOG.md
