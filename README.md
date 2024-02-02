@@ -16,6 +16,8 @@ You can also use Alt+P to activate the picker (or configure an alternate shortcu
 
 TIP: Fine-tuning your selection using Q/A keys, and choosing a VIDEO element will ensure that the target video will be opened as PIP.
 
+I'm using this all the time to isolate html elements (especially images ;), and to trigger Picture-In-Picture for videos on sites that don't expose the feature.
+
 **NOTE**: Although the extension tries to keep the elements stylized as in the original page, 
 the underlying technology ([DocumentPictureInPicture](https://developer.chrome.com/docs/web-platform/document-picture-in-picture)) cannot ensure the same styles are applied consistently
 (either because the DOM layout is different in the PIP Window vs the original page - so CSS doesn't work in the intended way - or JS is used to style the page).
